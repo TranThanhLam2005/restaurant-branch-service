@@ -23,6 +23,8 @@ public class Branch {
     
     private String name;
     private String address;
+    private String state;
+    private String city;
     private String phoneNumber;
     private LocalTime openingTime;
     private LocalTime closingTime;
