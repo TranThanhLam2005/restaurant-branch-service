@@ -14,8 +14,9 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = "tables")
-@EqualsAndHashCode(exclude = "tables")
+
+@ToString(exclude = {"tables", "city"})
+@EqualsAndHashCode(exclude = {"tables", "city"})
 public class Branch {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,11 +24,13 @@ public class Branch {
     
     private String name;
     private String address;
-    private String state;
-    private String city;
     private String phoneNumber;
     private LocalTime openingTime;
     private LocalTime closingTime;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "city_id", nullable = false)
+    private City city;
 
     @OneToMany(mappedBy = "branch", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore

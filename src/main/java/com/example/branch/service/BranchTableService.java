@@ -11,10 +11,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-/**
- * Internal service for handling REST API requests for branch tables
- * Uses external DTOs for API responses
- */
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)

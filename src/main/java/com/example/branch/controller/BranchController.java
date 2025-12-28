@@ -5,6 +5,7 @@ import com.example.branch.dto.BranchTableDTO;
 import com.example.branch.service.BranchService;
 import com.example.branch.service.BranchTableService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/branches")
 @RequiredArgsConstructor
+@Slf4j
 public class BranchController {
     
     private final BranchService branchService;
@@ -22,6 +24,7 @@ public class BranchController {
     @GetMapping
     public ResponseEntity<List<BranchDTO>> getAllBranches() {
         List<BranchDTO> branches = branchService.getAllBranches();
+        log.info("Returning {} branches from controller", branches.size());
         return ResponseEntity.ok(branches);
     }
 
