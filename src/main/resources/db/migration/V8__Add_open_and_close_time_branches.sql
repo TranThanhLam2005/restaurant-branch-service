@@ -1,0 +1,3 @@
+ALTER TABLE branches
+ALTER COLUMN opening_time SET DEFAULT TIME '08:00',
+ALTER COLUMN closing_time SET DEFAULT TIME '12:00';

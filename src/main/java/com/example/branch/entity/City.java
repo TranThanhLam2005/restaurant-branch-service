@@ -3,6 +3,8 @@ package com.example.branch.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.List;
+import java.util.ArrayList;
 
 @Entity
 @Table(name = "cities")
@@ -23,4 +25,8 @@ public class City {
     @JoinColumn(name = "state_id", nullable = false)
     @JsonIgnore
     private State state;
+
+    @OneToMany(mappedBy = "city", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<Branch> branches = new ArrayList<>();
 }

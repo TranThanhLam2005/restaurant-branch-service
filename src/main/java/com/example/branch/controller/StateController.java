@@ -42,13 +42,6 @@ public class StateController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdState);
     }
     
-    @PutMapping("/{id}")
-    public ResponseEntity<StateDTO> updateState(@PathVariable Long id, @RequestBody StateDTO stateDTO) {
-        return stateService.updateState(id, stateDTO)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-    
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteState(@PathVariable Long id) {
         boolean deleted = stateService.deleteState(id);

@@ -14,7 +14,6 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-
 @ToString(exclude = "cities")
 @EqualsAndHashCode(exclude = "cities")
 public class State {
@@ -23,7 +22,6 @@ public class State {
     private Long id;
     
     private String name;
-
 
     @OneToMany(mappedBy = "state", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore

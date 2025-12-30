@@ -52,21 +52,6 @@ public class CityService {
     }
     
     @Transactional
-    public Optional<CityDTO> updateCity(Long id, CityDTO cityDTO) {
-        return cityRepository.findById(id)
-                .map(city -> {
-                    city.setName(cityDTO.getName());
-                    if (cityDTO.getStateId() != null) {
-                        State state = stateRepository.findById(cityDTO.getStateId())
-                                .orElseThrow(() -> new RuntimeException("State not found with id: " + cityDTO.getStateId()));
-                        city.setState(state);
-                    }
-                    City updatedCity = cityRepository.save(city);
-                    return convertToDTO(updatedCity);
-                });
-    }
-    
-    @Transactional
     public boolean deleteCity(Long id) {
         if (cityRepository.existsById(id)) {
             cityRepository.deleteById(id);

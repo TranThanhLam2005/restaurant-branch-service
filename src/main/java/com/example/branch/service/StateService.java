@@ -42,15 +42,6 @@ public class StateService {
         return convertToDTO(savedState);
     }
     
-    @Transactional
-    public Optional<StateDTO> updateState(Long id, StateDTO stateDTO) {
-        return stateRepository.findById(id)
-                .map(state -> {
-                    state.setName(stateDTO.getName());
-                    State updatedState = stateRepository.save(state);
-                    return convertToDTO(updatedState);
-                });
-    }
     
     @Transactional
     public boolean deleteState(Long id) {

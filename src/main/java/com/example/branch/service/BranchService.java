@@ -2,11 +2,11 @@ package com.example.branch.service;
 
 import com.example.branch.entity.Branch;
 import com.example.branch.entity.City;
-import com.example.branch.entity.State;
 import com.example.branch.dto.BranchDTO;
 import com.example.branch.repository.BranchRepository;
-import com.example.branch.repository.CityRepository;
-import com.example.branch.repository.StateRepository;
+
+
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,22 +21,18 @@ import java.util.stream.Collectors;
 public class BranchService {
     
     private final BranchRepository branchRepository;
-    private final CityRepository cityRepository;
-    private final StateRepository stateRepository;
+    private final CityService cityService;
+
 
     public List<BranchDTO> getAllBranches() {
-        log.info("Fetching all branches from database");
         List<Branch> branches = branchRepository.findAll();
-        log.info("Found {} branches in database", branches.size());
         List<BranchDTO> result = branches.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
-        log.info("Converted {} branches to DTOs", result.size());
         return result;
     }
 
     public Optional<BranchDTO> getBranchById(Long id) {
-        log.info("Fetching branch {} from database", id);
         Optional<Branch> branch = branchRepository.findById(id);
         return branch.map(this::convertToDTO);
     }
@@ -44,7 +40,6 @@ public class BranchService {
     public BranchDTO createBranch(BranchDTO branchDTO) {
         Branch branch = convertToEntity(branchDTO);
         Branch savedBranch = branchRepository.save(branch);
-        log.info("Created new branch with id: {}", savedBranch.getId());
         return convertToDTO(savedBranch);
     }
 
@@ -56,45 +51,26 @@ public class BranchService {
                     existingBranch.setPhoneNumber(branchDTO.getPhoneNumber());
                     existingBranch.setOpeningTime(branchDTO.getOpeningTime() != null ? java.time.LocalTime.parse(branchDTO.getOpeningTime()) : null);
                     existingBranch.setClosingTime(branchDTO.getClosingTime() != null ? java.time.LocalTime.parse(branchDTO.getClosingTime()) : null);
-                    
-                    // Update City if provided
-                    if (branchDTO.getCity() != null && branchDTO.getState() != null) {
-                        State state = stateRepository.findByName(branchDTO.getState())
-                                .orElseThrow(() -> new IllegalArgumentException("State not found: " + branchDTO.getState()));
-                        
-                        City city = cityRepository.findByNameAndStateId(branchDTO.getCity(), state.getId())
-                                .orElseThrow(() -> new IllegalArgumentException("City not found: " + branchDTO.getCity() + " in state " + branchDTO.getState()));
-                        
-                        existingBranch.setCity(city);
-                    }
-                    
                     Branch savedBranch = branchRepository.save(existingBranch);
-                    log.info("Updated branch with id: {}", id);
                     return convertToDTO(savedBranch);
                 });
     }
 
+    @Transactional
     public boolean deleteBranch(Long id) {
-        return branchRepository.findById(id)
-                .map(branch -> {
-                    branchRepository.delete(branch);
-                    log.info("Deleted branch with id: {}", id);
-                    return true;
-                })
-                .orElse(false);
+        if (branchRepository.existsById(id)) {
+            branchRepository.deleteById(id);
+            return true;
+        }
+        return false;
     }
 
-    /**
-     * Convert Branch entity to DTO
-     */
     private BranchDTO convertToDTO(Branch branch) {
         BranchDTO dto = new BranchDTO();
         dto.setId(branch.getId());
         dto.setName(branch.getName());
         dto.setAddress(branch.getAddress());
-        dto.setCity(branch.getCity() != null ? branch.getCity().getName() : null);
-        dto.setState(branch.getCity() != null && branch.getCity().getState() != null ? 
-                     branch.getCity().getState().getName() : null);
+        dto.setCityId(branch.getCity() != null ? branch.getCity().getId() : null);
         dto.setPhoneNumber(branch.getPhoneNumber());
         dto.setOpeningTime(branch.getOpeningTime() != null ? branch.getOpeningTime().toString() : null);
         dto.setClosingTime(branch.getClosingTime() != null ? branch.getClosingTime().toString() : null);
@@ -113,17 +89,18 @@ public class BranchService {
         branch.setOpeningTime(dto.getOpeningTime() != null ? java.time.LocalTime.parse(dto.getOpeningTime()) : null);
         branch.setClosingTime(dto.getClosingTime() != null ? java.time.LocalTime.parse(dto.getClosingTime()) : null);
         
-        // Find or get City by name and state
-        if (dto.getCity() != null && dto.getState() != null) {
-            State state = stateRepository.findByName(dto.getState())
-                    .orElseThrow(() -> new IllegalArgumentException("State not found: " + dto.getState()));
-            
-            City city = cityRepository.findByNameAndStateId(dto.getCity(), state.getId())
-                    .orElseThrow(() -> new IllegalArgumentException("City not found: " + dto.getCity() + " in state " + dto.getState()));
-            
+        // Set City by cityId
+        if (dto.getCityId() != null) {
+            City city = cityService.getCityById(dto.getCityId())
+                    .map(cityDTO -> {
+                        City c = new City();
+                        c.setId(cityDTO.getId());
+                        c.setName(cityDTO.getName());
+                        return c;
+                    })
+                    .orElseThrow(() -> new RuntimeException("City not found with id: " + dto.getCityId()));
             branch.setCity(city);
         }
-        
         return branch;
     }
 }

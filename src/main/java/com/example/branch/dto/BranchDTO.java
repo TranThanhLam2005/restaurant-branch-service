@@ -12,8 +12,7 @@ public class BranchDTO {
     private Long id;
     private String name;
     private String address;
-    private String state;
-    private String city;
+    private Long cityId;
     private String phoneNumber;
     private String openingTime;
     private String closingTime;

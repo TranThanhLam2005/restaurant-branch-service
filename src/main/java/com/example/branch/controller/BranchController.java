@@ -24,7 +24,6 @@ public class BranchController {
     @GetMapping
     public ResponseEntity<List<BranchDTO>> getAllBranches() {
         List<BranchDTO> branches = branchService.getAllBranches();
-        log.info("Returning {} branches from controller", branches.size());
         return ResponseEntity.ok(branches);
     }
 

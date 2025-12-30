@@ -41,13 +41,6 @@ public class CityController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdCity);
     }
     
-    @PutMapping("/{id}")
-    public ResponseEntity<CityDTO> updateCity(@PathVariable Long id, @RequestBody CityDTO cityDTO) {
-        return cityService.updateCity(id, cityDTO)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-    
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCity(@PathVariable Long id) {
         boolean deleted = cityService.deleteCity(id);
