@@ -37,6 +37,13 @@ public class BranchService {
         return branch.map(this::convertToDTO);
     }
 
+    public List<BranchDTO> getBranchesByCityId(Long cityId) {
+        List<Branch> branches = branchRepository.findByCityId(cityId);
+        return branches.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
     public BranchDTO createBranch(BranchDTO branchDTO) {
         Branch branch = convertToEntity(branchDTO);
         Branch savedBranch = branchRepository.save(branch);

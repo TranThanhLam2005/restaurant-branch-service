@@ -40,6 +40,12 @@ public class BranchController {
         return ResponseEntity.ok(tables);
     }
 
+    @GetMapping("/city/{cityId}")
+    public ResponseEntity<List<BranchDTO>> getBranchesByCityId(@PathVariable Long cityId) {
+        List<BranchDTO> branches = branchService.getBranchesByCityId(cityId);
+        return ResponseEntity.ok(branches);
+    }
+
     @PostMapping
     public ResponseEntity<BranchDTO> createBranch(@RequestBody BranchDTO branchDTO) {
         BranchDTO createdBranch = branchService.createBranch(branchDTO);
