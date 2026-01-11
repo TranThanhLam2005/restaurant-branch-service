@@ -1,70 +1,64 @@
 package com.example.branch.service;
 
-import com.example.branch.dto.CityDTO;
+import com.example.branch.dto.CityRequest;
+import com.example.branch.dto.CityResponse;
 import com.example.branch.entity.City;
 import com.example.branch.entity.State;
 import com.example.branch.repository.CityRepository;
 import com.example.branch.repository.StateRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional
 public class CityService {
     
     private final CityRepository cityRepository;
     private final StateRepository stateRepository;
     
-    public List<CityDTO> getAllCities() {
+    @Transactional(readOnly = true)
+    public List<CityResponse> getAllCities() {
         return cityRepository.findAll().stream()
-                .map(this::convertToDTO)
+                .map(CityResponse::fromEntity)
                 .collect(Collectors.toList());
     }
     
-    public List<CityDTO> getCitiesByStateId(Long stateId) {
+    @Transactional(readOnly = true)
+    public List<CityResponse> getCitiesByStateId(Long stateId) {
         return cityRepository.findByStateId(stateId).stream()
-                .map(this::convertToDTO)
+                .map(CityResponse::fromEntity)
                 .collect(Collectors.toList());
     }
     
-    public Optional<CityDTO> getCityById(Long id) {
-        return cityRepository.findById(id)
-                .map(this::convertToDTO);
+    @Transactional(readOnly = true)
+    public CityResponse getCityById(Long id) {
+        City city = cityRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("City not found with id: " + id));
+        return CityResponse.fromEntity(city);
     }
     
-    @Transactional
-    public CityDTO createCity(CityDTO cityDTO) {
-        State state = stateRepository.findById(cityDTO.getStateId())
-                .orElseThrow(() -> new RuntimeException("State not found with id: " + cityDTO.getStateId()));
+    public CityResponse createCity(CityRequest request) {
+        State state = stateRepository.findById(request.getStateId())
+                .orElseThrow(() -> new EntityNotFoundException("State not found with id: " + request.getStateId()));
         
         City city = new City();
-        city.setName(cityDTO.getName());
+        city.setName(request.getName());
         city.setState(state);
         
         City savedCity = cityRepository.save(city);
-        return convertToDTO(savedCity);
+        return CityResponse.fromEntity(savedCity);
     }
     
-    @Transactional
-    public boolean deleteCity(Long id) {
-        if (cityRepository.existsById(id)) {
-            cityRepository.deleteById(id);
-            return true;
+    public void deleteCity(Long id) {
+        if (!cityRepository.existsById(id)) {
+            throw new EntityNotFoundException("City not found with id: " + id);
         }
-        return false;
-    }
-    
-    private CityDTO convertToDTO(City city) {
-        return new CityDTO(
-            city.getId(),
-            city.getName(),
-            city.getState() != null ? city.getState().getId() : null
-        );
+        cityRepository.deleteById(id);
     }
 }

@@ -1,58 +1,56 @@
 package com.example.branch.service;
 
-import com.example.branch.dto.StateDTO;
+import com.example.branch.dto.StateRequest;
+import com.example.branch.dto.StateResponse;
 import com.example.branch.entity.State;
 import com.example.branch.repository.StateRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional
 public class StateService {
     
     private final StateRepository stateRepository;
     
-    public List<StateDTO> getAllStates() {
+    @Transactional(readOnly = true)
+    public List<StateResponse> getAllStates() {
         return stateRepository.findAll().stream()
-                .map(this::convertToDTO)
+                .map(StateResponse::fromEntity)
                 .collect(Collectors.toList());
     }
     
-    public Optional<StateDTO> getStateById(Long id) {
-        return stateRepository.findById(id)
-                .map(this::convertToDTO);
+    @Transactional(readOnly = true)
+    public StateResponse getStateById(Long id) {
+        State state = stateRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("State not found with id: " + id));
+        return StateResponse.fromEntity(state);
     }
     
-    public Optional<StateDTO> getStateByName(String name) {
-        return stateRepository.findByName(name)
-                .map(this::convertToDTO);
+    @Transactional(readOnly = true)
+    public StateResponse getStateByName(String name) {
+        State state = stateRepository.findByName(name)
+                .orElseThrow(() -> new EntityNotFoundException("State not found with name: " + name));
+        return StateResponse.fromEntity(state);
     }
     
-    @Transactional
-    public StateDTO createState(StateDTO stateDTO) {
+    public StateResponse createState(StateRequest request) {
         State state = new State();
-        state.setName(stateDTO.getName());
+        state.setName(request.getName());
         State savedState = stateRepository.save(state);
-        return convertToDTO(savedState);
+        return StateResponse.fromEntity(savedState);
     }
     
-    
-    @Transactional
-    public boolean deleteState(Long id) {
-        if (stateRepository.existsById(id)) {
-            stateRepository.deleteById(id);
-            return true;
+    public void deleteState(Long id) {
+        if (!stateRepository.existsById(id)) {
+            throw new EntityNotFoundException("State not found with id: " + id);
         }
-        return false;
-    }
-    
-    private StateDTO convertToDTO(State state) {
-        return new StateDTO(state.getId(), state.getName());
+        stateRepository.deleteById(id);
     }
 }

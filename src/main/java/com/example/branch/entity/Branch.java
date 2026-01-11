@@ -14,7 +14,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-
+@Builder
 @ToString(exclude = {"tables", "city"})
 @EqualsAndHashCode(exclude = {"tables", "city"})
 public class Branch {

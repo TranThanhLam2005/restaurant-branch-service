@@ -16,12 +16,12 @@ public class BranchTable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "branch_id", nullable = false)
     @JsonIgnore
     private Branch branch;
-    
+
     private Integer tableNumber;
     private Integer seatingCapacity;
     private Boolean isAvailable;

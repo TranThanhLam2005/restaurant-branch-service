@@ -1,8 +1,9 @@
 package com.example.branch.controller;
 
-
 import com.example.branch.service.BranchTableService;
-import com.example.branch.dto.BranchTableDTO;
+import com.example.branch.dto.BranchTableRequest;
+import com.example.branch.dto.BranchTableResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,35 +19,34 @@ public class BranchTableController {
     private final BranchTableService branchTableService;
 
     @GetMapping
-    public ResponseEntity<List<BranchTableDTO>> getAllBranchTables() {
-        List<BranchTableDTO> branchTables = branchTableService.getAllBranchTables();
+    public ResponseEntity<List<BranchTableResponse>> getAllBranchTables() {
+        List<BranchTableResponse> branchTables = branchTableService.getAllBranchTables();
         return ResponseEntity.ok(branchTables);
     }
+    
     @GetMapping("/{id}")
-    public ResponseEntity<BranchTableDTO> getBranchTableById(@PathVariable Long id)
-    {
-        return branchTableService.getBranchTableById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<BranchTableResponse> getBranchTableById(@PathVariable Long id) {
+        BranchTableResponse table = branchTableService.getBranchTableById(id);
+        return ResponseEntity.ok(table);
     }
+    
     @PostMapping
-    public ResponseEntity<BranchTableDTO> createBranchTable(@RequestBody BranchTableDTO branchTableDTO)
-    {
-        return branchTableService.createBranchTable(branchTableDTO)
-                .map(createdBranchTable -> ResponseEntity.status(HttpStatus.CREATED).body(createdBranchTable))
-                .orElse(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
+    public ResponseEntity<BranchTableResponse> createBranchTable(@Valid @RequestBody BranchTableRequest request) {
+        BranchTableResponse createdTable = branchTableService.createBranchTable(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdTable);
     }
-    @PutMapping("/{id}/status")
-    public ResponseEntity<BranchTableDTO> updateBranchTableStatus(@PathVariable Long id, @RequestParam Boolean isAvailable)
-    {
-        return branchTableService.updateBranchTableStatus(id, isAvailable)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<BranchTableResponse> updateBranchTableStatus(
+            @PathVariable Long id,
+            @RequestParam Boolean isAvailable) {
+        BranchTableResponse updatedTable = branchTableService.updateBranchTableStatus(id, isAvailable);
+        return ResponseEntity.ok(updatedTable);
     }
+    
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteBranchTable(@PathVariable Long id)
-    {
-        boolean deleted = branchTableService.deleteBranchTable(id);
-        return deleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+    public ResponseEntity<Void> deleteBranchTable(@PathVariable Long id) {
+        branchTableService.deleteBranchTable(id);
+        return ResponseEntity.noContent().build();
     }
 }

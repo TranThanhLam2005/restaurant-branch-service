@@ -1,9 +1,11 @@
 package com.example.branch.controller;
 
-import com.example.branch.dto.BranchDTO;
-import com.example.branch.dto.BranchTableDTO;
+import com.example.branch.dto.BranchRequest;
+import com.example.branch.dto.BranchResponse;
+import com.example.branch.dto.BranchTableResponse;
 import com.example.branch.service.BranchService;
 import com.example.branch.service.BranchTableService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -22,47 +24,47 @@ public class BranchController {
     private final BranchTableService branchTableService;
 
     @GetMapping
-    public ResponseEntity<List<BranchDTO>> getAllBranches() {
-        List<BranchDTO> branches = branchService.getAllBranches();
+    public ResponseEntity<List<BranchResponse>> getAllBranches() {
+        List<BranchResponse> branches = branchService.getAllBranches();
         return ResponseEntity.ok(branches);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<BranchDTO> getBranchById(@PathVariable Long id) {
-        return branchService.getBranchById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<BranchResponse> getBranchById(@PathVariable Long id) {
+        BranchResponse branch = branchService.getBranchById(id);
+        return ResponseEntity.ok(branch);
     }
 
     @GetMapping("/{id}/tables")
-    public ResponseEntity<List<BranchTableDTO>> getTablesByBranchId(@PathVariable Long id) {
-        List<BranchTableDTO> tables = branchTableService.getTablesByBranchId(id);
+    public ResponseEntity<List<BranchTableResponse>> getTablesByBranchId(@PathVariable Long id) {
+        List<BranchTableResponse> tables = branchTableService.getTablesByBranchId(id);
         return ResponseEntity.ok(tables);
     }
 
     @GetMapping("/city/{cityId}")
-    public ResponseEntity<List<BranchDTO>> getBranchesByCityId(@PathVariable Long cityId) {
-        List<BranchDTO> branches = branchService.getBranchesByCityId(cityId);
+    public ResponseEntity<List<BranchResponse>> getBranchesByCityId(@PathVariable Long cityId) {
+        List<BranchResponse> branches = branchService.getBranchesByCityId(cityId);
         return ResponseEntity.ok(branches);
     }
 
     @PostMapping
-    public ResponseEntity<BranchDTO> createBranch(@RequestBody BranchDTO branchDTO) {
-        BranchDTO createdBranch = branchService.createBranch(branchDTO);
+    public ResponseEntity<BranchResponse> createBranch(@Valid @RequestBody BranchRequest request) {
+        BranchResponse createdBranch = branchService.createBranch(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdBranch);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<BranchDTO> updateBranch(@PathVariable Long id, @RequestBody BranchDTO branchDTO) {
-        return branchService.updateBranch(id, branchDTO)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<BranchResponse> updateBranch(
+            @PathVariable Long id,
+            @Valid @RequestBody BranchRequest request) {
+        BranchResponse updatedBranch = branchService.updateBranch(id, request);
+        return ResponseEntity.ok(updatedBranch);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteBranch(@PathVariable Long id) {
-        boolean deleted = branchService.deleteBranch(id);
-        return deleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+        branchService.deleteBranch(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/health")

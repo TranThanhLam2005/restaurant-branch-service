@@ -2,112 +2,91 @@ package com.example.branch.service;
 
 import com.example.branch.entity.Branch;
 import com.example.branch.entity.City;
-import com.example.branch.dto.BranchDTO;
+import com.example.branch.dto.BranchRequest;
+import com.example.branch.dto.BranchResponse;
 import com.example.branch.repository.BranchRepository;
+import com.example.branch.repository.CityRepository;
 
-
-import jakarta.transaction.Transactional;
+import jakarta.persistence.EntityNotFoundException;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional
 public class BranchService {
     
     private final BranchRepository branchRepository;
-    private final CityService cityService;
+    private final CityRepository cityRepository;
 
-
-    public List<BranchDTO> getAllBranches() {
-        List<Branch> branches = branchRepository.findAll();
-        List<BranchDTO> result = branches.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-        return result;
-    }
-
-    public Optional<BranchDTO> getBranchById(Long id) {
-        Optional<Branch> branch = branchRepository.findById(id);
-        return branch.map(this::convertToDTO);
-    }
-
-    public List<BranchDTO> getBranchesByCityId(Long cityId) {
-        List<Branch> branches = branchRepository.findByCityId(cityId);
-        return branches.stream()
-                .map(this::convertToDTO)
+    @Transactional(readOnly = true)
+    public List<BranchResponse> getAllBranches() {
+        return branchRepository.findAll().stream()
+                .map(BranchResponse::fromEntity)
                 .collect(Collectors.toList());
     }
 
-    public BranchDTO createBranch(BranchDTO branchDTO) {
-        Branch branch = convertToEntity(branchDTO);
+    @Transactional(readOnly = true)
+    public BranchResponse getBranchById(Long id) {
+        Branch branch = branchRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Branch not found with id: " + id));
+        return BranchResponse.fromEntity(branch);
+    }
+
+    @Transactional(readOnly = true)
+    public List<BranchResponse> getBranchesByCityId(Long cityId) {
+        return branchRepository.findByCityId(cityId).stream()
+                .map(BranchResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    public BranchResponse createBranch(BranchRequest request) {
+        City city = cityRepository.findById(request.getCityId())
+                .orElseThrow(() -> new EntityNotFoundException("City not found with id: " + request.getCityId()));
+
+        Branch branch = Branch.builder()
+                .name(request.getName())
+                .address(request.getAddress())
+                .phoneNumber(request.getPhoneNumber())
+                .openingTime(request.getOpeningTime() != null ? LocalTime.parse(request.getOpeningTime()) : null)
+                .closingTime(request.getClosingTime() != null ? LocalTime.parse(request.getClosingTime()) : null)
+                .city(city)
+                .build();
+
         Branch savedBranch = branchRepository.save(branch);
-        return convertToDTO(savedBranch);
+        return BranchResponse.fromEntity(savedBranch);
     }
 
-    public Optional<BranchDTO> updateBranch(Long id, BranchDTO branchDTO) {
-        return branchRepository.findById(id)
-                .map(existingBranch -> {
-                    existingBranch.setName(branchDTO.getName());
-                    existingBranch.setAddress(branchDTO.getAddress());
-                    existingBranch.setPhoneNumber(branchDTO.getPhoneNumber());
-                    existingBranch.setOpeningTime(branchDTO.getOpeningTime() != null ? java.time.LocalTime.parse(branchDTO.getOpeningTime()) : null);
-                    existingBranch.setClosingTime(branchDTO.getClosingTime() != null ? java.time.LocalTime.parse(branchDTO.getClosingTime()) : null);
-                    Branch savedBranch = branchRepository.save(existingBranch);
-                    return convertToDTO(savedBranch);
-                });
+    public BranchResponse updateBranch(Long id, BranchRequest request) {
+        Branch existingBranch = branchRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Branch not found with id: " + id));
+
+        City city = cityRepository.findById(request.getCityId())
+                .orElseThrow(() -> new EntityNotFoundException("City not found with id: " + request.getCityId()));
+
+        existingBranch.setName(request.getName());
+        existingBranch.setAddress(request.getAddress());
+        existingBranch.setPhoneNumber(request.getPhoneNumber());
+        existingBranch.setOpeningTime(request.getOpeningTime() != null ? LocalTime.parse(request.getOpeningTime()) : null);
+        existingBranch.setClosingTime(request.getClosingTime() != null ? LocalTime.parse(request.getClosingTime()) : null);
+        existingBranch.setCity(city);
+
+        Branch savedBranch = branchRepository.save(existingBranch);
+        return BranchResponse.fromEntity(savedBranch);
     }
 
-    @Transactional
-    public boolean deleteBranch(Long id) {
-        if (branchRepository.existsById(id)) {
-            branchRepository.deleteById(id);
-            return true;
+    public void deleteBranch(Long id) {
+        if (!branchRepository.existsById(id)) {
+            throw new EntityNotFoundException("Branch not found with id: " + id);
         }
-        return false;
+        branchRepository.deleteById(id);
     }
 
-    private BranchDTO convertToDTO(Branch branch) {
-        BranchDTO dto = new BranchDTO();
-        dto.setId(branch.getId());
-        dto.setName(branch.getName());
-        dto.setAddress(branch.getAddress());
-        dto.setCityId(branch.getCity() != null ? branch.getCity().getId() : null);
-        dto.setPhoneNumber(branch.getPhoneNumber());
-        dto.setOpeningTime(branch.getOpeningTime() != null ? branch.getOpeningTime().toString() : null);
-        dto.setClosingTime(branch.getClosingTime() != null ? branch.getClosingTime().toString() : null);
-        return dto;
-    }
-
-    /**
-     * Convert DTO to Branch entity
-     */
-    private Branch convertToEntity(BranchDTO dto) {
-        Branch branch = new Branch();
-        branch.setId(dto.getId());
-        branch.setName(dto.getName());
-        branch.setAddress(dto.getAddress());
-        branch.setPhoneNumber(dto.getPhoneNumber());
-        branch.setOpeningTime(dto.getOpeningTime() != null ? java.time.LocalTime.parse(dto.getOpeningTime()) : null);
-        branch.setClosingTime(dto.getClosingTime() != null ? java.time.LocalTime.parse(dto.getClosingTime()) : null);
-        
-        // Set City by cityId
-        if (dto.getCityId() != null) {
-            City city = cityService.getCityById(dto.getCityId())
-                    .map(cityDTO -> {
-                        City c = new City();
-                        c.setId(cityDTO.getId());
-                        c.setName(cityDTO.getName());
-                        return c;
-                    })
-                    .orElseThrow(() -> new RuntimeException("City not found with id: " + dto.getCityId()));
-            branch.setCity(city);
-        }
-        return branch;
-    }
 }
