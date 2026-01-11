@@ -21,6 +21,15 @@ spring:
   flyway:
     enabled: true
     baseline-on-migrate: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://discovery-server:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
 # Redis configuration commented out - using basic database operations only
 #  redis:
 #    host: localhost
